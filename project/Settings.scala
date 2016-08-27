@@ -21,7 +21,11 @@ object Settings {
   object versions {
     val scala = "2.11.8"
     val akka = "2.4.9"
-    val upickle = "0.3.8"
+    val upickle = "0.4.1"
+    val ace = "1.2.2"
+    val dom = "0.9.1"
+    val scalatags = "0.6.0"
+    val async = "0.9.1"
   }
 
 }

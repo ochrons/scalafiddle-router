@@ -1,13 +1,16 @@
 package fiddle.router
 
+import java.io.ByteArrayOutputStream
+
 import akka.actor._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.pattern._
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{Sink, Source, StreamConverters}
 import akka.util.Timeout
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -25,16 +28,22 @@ class Router(host: String, port: Int) extends Actor with ActorLogging {
   def receive = {
     case RouteRequest(req) =>
       reqId += 1
-      log.debug(s"Request: ${req.toString}")
       val resp = Source.single(req -> reqId)
         .via(clientFlow)
         .runWith(Sink.head)
-        .map {
+        .flatMap {
           case (Success(response), _) =>
-            response
+            val bos = new ByteArrayOutputStream()
+            val sink = StreamConverters.fromOutputStream(() => bos)
+            response.entity.dataBytes.runWith(sink).map { ioResult =>
+              if (ioResult.wasSuccessful)
+                Right(bos.toByteArray)
+              else
+                Left(StatusCodes.InternalServerError)
+            }
           case (Failure(ex), _) =>
             log.error(ex, s"Failed to complete request ${req.uri.path.toString}")
-            HttpResponse(StatusCodes.InternalServerError)
+            Future.successful(Left(StatusCodes.InternalServerError))
         }
       resp pipeTo sender()
   }
