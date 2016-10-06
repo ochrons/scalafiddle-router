@@ -7,7 +7,7 @@ object Settings {
   val name = "scalafiddle-router"
 
   /** The version of your application */
-  val version = "1.0.0-SNAPSHOT"
+  val version = "1.0.1-SNAPSHOT"
 
   /** Options for the scala compiler */
   val scalacOptions = Seq(

@@ -8,9 +8,12 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.CacheDirectives.`max-age`
 import akka.http.scaladsl.model.headers.{HttpOrigin, HttpOriginRange, `Cache-Control`}
+import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.pattern._
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Flow
 import akka.util.Timeout
 import ch.megard.akka.http.cors.{CorsDirectives, CorsSettings}
 import fiddle.router.cache.Cache
@@ -103,7 +106,7 @@ class WebService(system: ActorSystem, router: ActorRef, cache: Cache) {
   }
 
 
-  val route = {
+  val extRoute: Route = {
     encodeResponse {
       get {
         path("embed") {
@@ -186,6 +189,15 @@ class WebService(system: ActorSystem, router: ActorRef, cache: Cache) {
       }
     }
   }
+
+  def wsFlow: Flow[Message, Message, Any] = ActorFlow.actorRef[Message, Message](out => CompilerService.props(out), () => ())
+
+  val compilerRoute: Route = {
+    path("compiler") {
+      handleWebSocketMessages(wsFlow)
+    }
+  }
+  val route = extRoute ~ compilerRoute
 
   val bindingFuture = Http().bindAndHandle(route, Config.interface, Config.port)
 
