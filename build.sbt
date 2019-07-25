@@ -21,7 +21,7 @@ lazy val client = project
       "org.scala-js" %%% "scalajs-dom" % versions.dom,
       "com.lihaoyi" %%% "scalatags" % versions.scalatags,
       "com.lihaoyi" %%% "upickle" % versions.upickle,
-      "com.github.marklister" %%% "base64" % "0.2.2",
+      "com.github.marklister" %%% "base64" % "0.2.9",
       "org.scala-lang.modules" %% "scala-async" % versions.async % "provided"
     ),
     // rename output always to -opt.js
